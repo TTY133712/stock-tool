@@ -212,54 +212,73 @@
     document.getElementById('search-btn').disabled = true;
 
     try {
-      // Yahoo Finance API（支援 CORS，台股代號格式：2330.TW）
-      const symbol = code + '.TW';
-      const now = Math.floor(Date.now() / 1000);
-      const from = now - 60 * 24 * 3600; // 近60天
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() - 90);
+      const toStr = today.toISOString().split('T')[0];
+      const fromStr = startDate.toISOString().split('T')[0];
 
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&period1=${from}&period2=${now}`;
-      const res = await fetch(url);
-      const json = await res.json();
+      // FinMind API - 台股日K資料
+      const priceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`;
+      const priceRes = await fetch(priceUrl);
+      const priceJson = await priceRes.json();
 
-      const result = json?.chart?.result?.[0];
-      if (!result) { showError(`查無股票代號 ${code}，請確認是否正確`); return; }
+      if (!priceJson.data || priceJson.data.length === 0) {
+        showError(`查無股票代號 ${code}，請確認是否為上市股票`);
+        return;
+      }
 
-      const meta = result.meta;
-      const timestamps = result.timestamp || [];
-      const quotes = result.indicators?.quote?.[0] || {};
-      const closes = (quotes.close || []).map(v => v ? parseFloat(v.toFixed(2)) : null);
-      const volumes = quotes.volume || [];
-      const opens = quotes.open || [];
-      const highs = quotes.high || [];
-      const lows = quotes.low || [];
-
-      const validCloses = closes.filter(v => v !== null);
-      const currentPrice = meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose;
+      const days = priceJson.data;
+      const latest = days[days.length - 1];
+      const prev = days[days.length - 2];
+      const closes = days.map(d => parseFloat(d.close));
+      const currentPrice = parseFloat(latest.close);
+      const prevClose = parseFloat(prev.close);
       const change = parseFloat((currentPrice - prevClose).toFixed(2));
       const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
 
       // 均線計算
-      const ma = (arr, n) => {
-        const valid = arr.filter(v => v !== null);
-        return valid.length >= n ? parseFloat((valid.slice(-n).reduce((a, b) => a + b, 0) / n).toFixed(2)) : null;
-      };
+      const ma = (arr, n) => arr.length >= n
+        ? parseFloat((arr.slice(-n).reduce((a, b) => a + b, 0) / n).toFixed(2))
+        : null;
       const ma5 = ma(closes, 5);
       const ma10 = ma(closes, 10);
       const ma20 = ma(closes, 20);
 
-      // 日期標籤
-      const dateLabels = timestamps.map(ts => {
-        const d = new Date(ts * 1000);
-        return `${d.getMonth()+1}/${d.getDate()}`;
-      });
+      // 融資融券
+      let marginData = null;
+      try {
+        const marginUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockMarginPurchaseShortSale&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`;
+        const marginRes = await fetch(marginUrl);
+        const marginJson = await marginRes.json();
+        if (marginJson.data && marginJson.data.length > 0) {
+          marginData = marginJson.data[marginJson.data.length - 1];
+          const marginPrev = marginJson.data[marginJson.data.length - 2];
+          marginData._marginChg = marginData.MarginPurchase - marginPrev.MarginPurchase;
+          marginData._shortChg = marginData.ShortSale - marginPrev.ShortSale;
+        }
+      } catch {}
+
+      // 三大法人
+      let instData = null;
+      try {
+        const instUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInstitutionalInvestors&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`;
+        const instRes = await fetch(instUrl);
+        const instJson = await instRes.json();
+        if (instJson.data && instJson.data.length > 0) {
+          const latestDate = instJson.data[instJson.data.length - 1].date;
+          const latestDay = instJson.data.filter(d => d.date === latestDate);
+          instData = {};
+          latestDay.forEach(d => { instData[d.name] = d.buy - d.sell; });
+        }
+      } catch {}
 
       // 顯示結果
       document.getElementById('loading').style.display = 'none';
       document.getElementById('result').style.display = 'block';
 
-      document.getElementById('r-name').textContent = meta.shortName || meta.symbol || code;
-      document.getElementById('r-code').textContent = code;
+      document.getElementById('r-name').textContent = code;
+      document.getElementById('r-code').textContent = latest.date;
 
       const priceEl = document.getElementById('r-price');
       priceEl.textContent = fmt(currentPrice);
@@ -268,19 +287,17 @@
       const changeEl = document.getElementById('r-change');
       changeEl.innerHTML = `<span class="${change > 0 ? 'up' : change < 0 ? 'down' : 'flat'}">${change > 0 ? '+' : ''}${change} (${changePct > 0 ? '+' : ''}${changePct}%)</span>`;
 
-      const lastIdx = closes.length - 1;
-      document.getElementById('r-open').textContent = fmt(opens[lastIdx]);
-      document.getElementById('r-high').textContent = fmt(highs[lastIdx]);
-      document.getElementById('r-low').textContent = fmt(lows[lastIdx]);
-      document.getElementById('r-vol').textContent = volumes[lastIdx] ? Math.round(volumes[lastIdx] / 1000).toLocaleString() : '—';
+      document.getElementById('r-open').textContent = fmt(latest.open);
+      document.getElementById('r-high').textContent = fmt(latest.max);
+      document.getElementById('r-low').textContent = fmt(latest.min);
+      document.getElementById('r-vol').textContent = latest.Trading_Volume ? Math.round(latest.Trading_Volume / 1000).toLocaleString() : '—';
 
       // 均線與訊號
       const setMA = (id, sigId, maVal) => {
         if (!maVal) { document.getElementById(id).textContent = '資料不足'; return; }
         document.getElementById(id).textContent = maVal;
         const diff = ((currentPrice - maVal) / maVal * 100).toFixed(1);
-        const sig = document.getElementById(sigId);
-        sig.innerHTML = currentPrice > maVal
+        document.getElementById(sigId).innerHTML = currentPrice > maVal
           ? `<span class="up">▲ 站上 +${diff}%</span>`
           : `<span class="down">▼ 跌破 ${diff}%</span>`;
       };
@@ -288,28 +305,48 @@
       setMA('r-ma10', 'r-ma10-sig', ma10);
       setMA('r-ma20', 'r-ma20-sig', ma20);
 
-      // 融資融券、三大法人：Yahoo Finance 不提供，顯示提示
-      ['r-margin','r-margin-chg','r-short','r-short-chg'].forEach(id => {
-        document.getElementById(id).innerHTML = '<span style="color:var(--text2);font-size:11px">需另查證交所</span>';
-      });
-      ['r-foreign','r-trust','r-dealer','r-inst-total'].forEach(id => {
-        document.getElementById(id).innerHTML = '<span style="color:var(--text2);font-size:11px">需另查證交所</span>';
-      });
+      // 融資融券
+      if (marginData) {
+        document.getElementById('r-margin').textContent = parseInt(marginData.MarginPurchase || 0).toLocaleString();
+        document.getElementById('r-short').textContent = parseInt(marginData.ShortSale || 0).toLocaleString();
+        document.getElementById('r-margin-chg').innerHTML = fmtChg(marginData._marginChg);
+        document.getElementById('r-short-chg').innerHTML = fmtChg(marginData._shortChg);
+      } else {
+        ['r-margin','r-margin-chg','r-short','r-short-chg'].forEach(id => {
+          document.getElementById(id).innerHTML = '<span style="color:var(--text2);font-size:11px">無資料</span>';
+        });
+      }
 
-      // K線走勢圖
-      const last30closes = closes.slice(-30);
-      const last30dates = dateLabels.slice(-30);
-      const chartMa5 = last30closes.map((_, i, arr) => i >= 4 ? parseFloat((arr.slice(i-4, i+1).filter(v=>v).reduce((a,b)=>a+b,0)/5).toFixed(2)) : null);
-      const chartMa10 = last30closes.map((_, i, arr) => i >= 9 ? parseFloat((arr.slice(i-9, i+1).filter(v=>v).reduce((a,b)=>a+b,0)/10).toFixed(2)) : null);
+      // 三大法人
+      if (instData) {
+        const foreign = instData['外資'] || instData['Foreign_Investor'] || 0;
+        const trust = instData['投信'] || instData['Investment_Trust'] || 0;
+        const dealer = instData['自營商'] || instData['Dealer'] || 0;
+        document.getElementById('r-foreign').innerHTML = fmtChg(foreign);
+        document.getElementById('r-trust').innerHTML = fmtChg(trust);
+        document.getElementById('r-dealer').innerHTML = fmtChg(dealer);
+        document.getElementById('r-inst-total').innerHTML = fmtChg(foreign + trust + dealer);
+      } else {
+        ['r-foreign','r-trust','r-dealer','r-inst-total'].forEach(id => {
+          document.getElementById(id).innerHTML = '<span style="color:var(--text2);font-size:11px">無資料</span>';
+        });
+      }
+
+      // K線走勢圖（近30日）
+      const last30 = days.slice(-30);
+      const chartDates = last30.map(d => d.date.slice(5));
+      const chartCloses = last30.map(d => parseFloat(d.close));
+      const chartMa5 = chartCloses.map((_, i, arr) => i >= 4 ? parseFloat((arr.slice(i-4,i+1).reduce((a,b)=>a+b,0)/5).toFixed(2)) : null);
+      const chartMa10 = chartCloses.map((_, i, arr) => i >= 9 ? parseFloat((arr.slice(i-9,i+1).reduce((a,b)=>a+b,0)/10).toFixed(2)) : null);
 
       if (priceChart) priceChart.destroy();
       const ctx = document.getElementById('price-chart').getContext('2d');
       priceChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: last30dates,
+          labels: chartDates,
           datasets: [
-            { label: '收盤價', data: last30closes, borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.08)', borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true },
+            { label: '收盤價', data: chartCloses, borderColor: '#58a6ff', backgroundColor: 'rgba(88,166,255,0.08)', borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true },
             { label: 'MA5', data: chartMa5, borderColor: '#f85149', borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
             { label: 'MA10', data: chartMa10, borderColor: '#3fb950', borderWidth: 1.5, pointRadius: 0, tension: 0.3 },
           ]
