@@ -433,7 +433,6 @@
       document.getElementById('loading').style.display='none';
       document.getElementById('result').style.display='block';
       document.getElementById('r-name').textContent=code;
-      const dateInput = document.getElementById('date-input').value;
       document.getElementById('r-date').textContent=latest.date+(dateInput?' （回測）':' （最新）');
       document.getElementById('r-price').textContent=curPrice;
       document.getElementById('r-price').className='price-big '+(change>0?'up':change<0?'down':'flat');
