@@ -14,7 +14,9 @@
   header h1{font-size:15px;font-weight:700;}
   .header-note{font-size:11px;color:var(--text2);}
   .container{max-width:860px;margin:0 auto;padding:20px;}
-  .search-bar{display:flex;gap:10px;margin-bottom:20px;}
+  .search-bar{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .search-bar input[type=date]{background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:10px 12px;outline:none;transition:border-color .15s;color-scheme:dark;}
+  .search-bar input[type=date]:focus{border-color:var(--blue);}
   .search-bar input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:15px;padding:10px 16px;outline:none;flex:1;transition:border-color .15s;}
   .search-bar input:focus{border-color:var(--blue);}
   .btn{border:none;border-radius:8px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;padding:10px 24px;transition:opacity .15s;}
@@ -76,8 +78,10 @@
 <div class="container">
   <div class="search-bar">
     <input type="text" id="stock-input" placeholder="輸入股票代號（例如：2330）" maxlength="6">
+    <input type="date" id="date-input" title="選擇評估日期（留空為最新）">
     <button class="btn btn-primary" id="search-btn" onclick="evaluate()">評估</button>
   </div>
+  <div style="font-size:11px;color:var(--text2);margin-top:-12px;margin-bottom:16px;">📅 可選擇過去日期，回測當日 SOP 評估結果</div>
   <div class="error" id="error-box"></div>
   <div class="loading" id="loading">資料載入中，請稍候…</div>
   <div class="result-area" id="result">
@@ -318,9 +322,10 @@
     manualToggles={}; stockData={};
 
     try {
-      const today = new Date();
-      const from = new Date(today); from.setDate(today.getDate()-120);
-      const toStr = today.toISOString().split('T')[0];
+      const dateInput = document.getElementById('date-input').value;
+      const targetDate = dateInput ? new Date(dateInput) : new Date();
+      const from = new Date(targetDate); from.setDate(targetDate.getDate()-120);
+      const toStr = targetDate.toISOString().split('T')[0];
       const fromStr = from.toISOString().split('T')[0];
 
       // 日K
@@ -412,7 +417,7 @@
       document.getElementById('loading').style.display='none';
       document.getElementById('result').style.display='block';
       document.getElementById('r-name').textContent=code;
-      document.getElementById('r-date').textContent=latest.date;
+      document.getElementById('r-date').textContent=latest.date + (dateInput ? ' （回測）' : ' （最新）');
       document.getElementById('r-price').textContent=curPrice;
       document.getElementById('r-price').className='price-big '+(change>0?'up':change<0?'down':'flat');
       document.getElementById('r-chg').innerHTML=`<span class="${change>0?'up':change<0?'down':'flat'}">${change>0?'+':''}${change} (${changePct>0?'+':''}${changePct}%)</span>`;
