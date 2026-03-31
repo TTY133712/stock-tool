@@ -79,7 +79,7 @@
   <div class="search-bar">
     <input type="text" id="stock-input" placeholder="輸入股票代號（例如：2330）" maxlength="6">
     <input type="date" id="date-input" title="選擇評估日期（留空為最新）">
-    <button class="btn btn-primary" id="search-btn" onclick="evaluate()">評估</button>
+    <button type="button" class="btn btn-primary" id="search-btn" onclick="evaluate()">評估</button>
   </div>
   <div style="font-size:11px;color:var(--text2);margin-top:-4px;margin-bottom:16px;">📅 可選擇過去日期回測 SOP，留空則查最新資料</div>
   <div class="error" id="error-box"></div>
@@ -355,14 +355,11 @@
           mData=mJson.data[mJson.data.length-1];
           mPrev=mJson.data[mJson.data.length-2];
           // 嘗試正確欄位名稱
-          if(mData.MarginPurchaseBalance!==undefined) {
-            mData.MarginPurchase = mData.MarginPurchaseBalance;
-            mPrev.MarginPurchase = mPrev.MarginPurchaseBalance;
-          }
-          if(mData.ShortSaleBalance!==undefined) {
-            mData.ShortSale = mData.ShortSaleBalance;
-            mPrev.ShortSale = mPrev.ShortSaleBalance;
-          }
+          // 正確欄位名稱
+          mData.MarginPurchase = parseInt(mData.MarginPurchaseTodayBalance || 0);
+          mPrev.MarginPurchase = parseInt(mPrev.MarginPurchaseTodayBalance || mPrev.MarginPurchaseYesterdayBalance || 0);
+          mData.ShortSale = parseInt(mData.ShortSaleTodayBalance || 0);
+          mPrev.ShortSale = parseInt(mPrev.ShortSaleTodayBalance || mPrev.ShortSaleYesterdayBalance || 0);
         }
       } catch{}
 
@@ -374,10 +371,10 @@
         if(iJson.data&&iJson.data.length>0) {
           const latestDate = iJson.data[iJson.data.length-1].date;
           const latestRows = iJson.data.filter(d=>d.date===latestDate);
-          instNet = latestRows.reduce((s,d)=>s+(parseInt(d.buy||0)-parseInt(d.sell||0)),0);
+          instNet = Math.round(latestRows.reduce((s,d)=>s+(parseInt(d.buy||0)-parseInt(d.sell||0)),0) / 1000);
           // 儲存各法人明細
           stockData.instDetail = {};
-          latestRows.forEach(d=>{ stockData.instDetail[d.name]=(parseInt(d.buy||0)-parseInt(d.sell||0)); });
+          latestRows.forEach(d=>{ stockData.instDetail[d.name]=Math.round((parseInt(d.buy||0)-parseInt(d.sell||0))/1000); });
         }
       } catch{}
 
