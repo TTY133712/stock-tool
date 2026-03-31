@@ -81,7 +81,7 @@
     <input type="date" id="date-input" title="選擇評估日期（留空為最新）">
     <button class="btn btn-primary" id="search-btn" onclick="evaluate()">評估</button>
   </div>
-  <div style="font-size:11px;color:var(--text2);margin-top:-12px;margin-bottom:16px;">📅 可選擇過去日期，回測當日 SOP 評估結果</div>
+  <div style="font-size:11px;color:var(--text2);margin-top:-4px;margin-bottom:16px;">📅 可選擇過去日期回測 SOP，留空則查最新資料</div>
   <div class="error" id="error-box"></div>
   <div class="loading" id="loading">資料載入中，請稍候…</div>
   <div class="result-area" id="result">
@@ -351,17 +351,33 @@
       try {
         const mRes = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockMarginPurchaseShortSale&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`);
         const mJson = await mRes.json();
-        if(mJson.data&&mJson.data.length>=2) { mData=mJson.data[mJson.data.length-1]; mPrev=mJson.data[mJson.data.length-2]; }
+        if(mJson.data&&mJson.data.length>=2) {
+          mData=mJson.data[mJson.data.length-1];
+          mPrev=mJson.data[mJson.data.length-2];
+          // 嘗試正確欄位名稱
+          if(mData.MarginPurchaseBalance!==undefined) {
+            mData.MarginPurchase = mData.MarginPurchaseBalance;
+            mPrev.MarginPurchase = mPrev.MarginPurchaseBalance;
+          }
+          if(mData.ShortSaleBalance!==undefined) {
+            mData.ShortSale = mData.ShortSaleBalance;
+            mPrev.ShortSale = mPrev.ShortSaleBalance;
+          }
+        }
       } catch{}
 
       // 三大法人
       let instNet=null;
       try {
-        const iRes = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInstitutionalInvestors&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`);
+        const iRes = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInstitutionalInvestorsBuySell&data_id=${code}&start_date=${fromStr}&end_date=${toStr}`);
         const iJson = await iRes.json();
         if(iJson.data&&iJson.data.length>0) {
           const latestDate = iJson.data[iJson.data.length-1].date;
-          instNet = iJson.data.filter(d=>d.date===latestDate).reduce((s,d)=>s+(d.buy-d.sell),0);
+          const latestRows = iJson.data.filter(d=>d.date===latestDate);
+          instNet = latestRows.reduce((s,d)=>s+(parseInt(d.buy||0)-parseInt(d.sell||0)),0);
+          // 儲存各法人明細
+          stockData.instDetail = {};
+          latestRows.forEach(d=>{ stockData.instDetail[d.name]=(parseInt(d.buy||0)-parseInt(d.sell||0)); });
         }
       } catch{}
 
@@ -417,7 +433,8 @@
       document.getElementById('loading').style.display='none';
       document.getElementById('result').style.display='block';
       document.getElementById('r-name').textContent=code;
-      document.getElementById('r-date').textContent=latest.date + (dateInput ? ' （回測）' : ' （最新）');
+      const dateInput = document.getElementById('date-input').value;
+      document.getElementById('r-date').textContent=latest.date+(dateInput?' （回測）':' （最新）');
       document.getElementById('r-price').textContent=curPrice;
       document.getElementById('r-price').className='price-big '+(change>0?'up':change<0?'down':'flat');
       document.getElementById('r-chg').innerHTML=`<span class="${change>0?'up':change<0?'down':'flat'}">${change>0?'+':''}${change} (${changePct>0?'+':''}${changePct}%)</span>`;
@@ -436,6 +453,15 @@
       if(instNet!==null) {
         const iEl=document.getElementById('q-inst');
         iEl.textContent=fmtNum(instNet)+' 張'; iEl.style.color=instNet>0?'var(--red)':'var(--green)';
+        // 顯示外資、投信、自營商明細（如果有 q-foreign 等元素）
+        if(stockData.instDetail) {
+          const foreign = stockData.instDetail['外資及陸資'] || stockData.instDetail['外資'] || 0;
+          const trust = stockData.instDetail['投信'] || 0;
+          const dealer = stockData.instDetail['自營商'] || stockData.instDetail['自營商(自行買賣)'] || 0;
+          if(document.getElementById('q-foreign')) document.getElementById('q-foreign').textContent=fmtNum(foreign);
+          if(document.getElementById('q-trust')) document.getElementById('q-trust').textContent=fmtNum(trust);
+          if(document.getElementById('q-dealer')) document.getElementById('q-dealer').textContent=fmtNum(dealer);
+        }
       }
 
       // K線圖
