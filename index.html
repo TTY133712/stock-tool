@@ -354,11 +354,12 @@ header h1{font-size:15px;font-weight:700;}
       </div>
       <div class="macro-section-title">🇹🇼 台灣市場</div>
       <div class="macro-grid" id="macro-tw-grid">
-        <div class="macro-card" id="mc-tw-idx"><div class="mc-label">加權指數 (0050 代理)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
-        <div class="macro-card" id="mc-tw-fut"><div class="mc-label">台指期 (TX 近月)</div><div class="mc-price">—</div><div class="mc-chg">—</div><div class="mc-note">—</div></div>
+        <div class="macro-card" id="mc-tw-idx"><div class="mc-label">加權指數 (^TWII)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
+        <div class="macro-card" id="mc-tw-etf0050"><div class="mc-label">元大台灣50 (0050)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
         <div class="macro-card" id="mc-tw-etf"><div class="mc-label">富邦台50 (006208)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
+        <div class="macro-card" id="mc-twd"><div class="mc-label">台幣匯率 (USD/TWD)</div><div class="mc-price">—</div><div class="mc-chg">—</div><div class="mc-note">—</div></div>
       </div>
-      <div class="macro-section-title">🌍 全球市場（Yahoo Finance）</div>
+      <div class="macro-section-title">🌍 全球市場</div>
       <div class="macro-grid" id="macro-global-grid">
         <div class="macro-card" id="mc-sp500"><div class="mc-label">S&amp;P 500</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
         <div class="macro-card" id="mc-nasdaq"><div class="mc-label">NASDAQ</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
@@ -367,7 +368,7 @@ header h1{font-size:15px;font-weight:700;}
         <div class="macro-card" id="mc-usd"><div class="mc-label">美元指數 (DXY)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
         <div class="macro-card" id="mc-gold"><div class="mc-label">黃金 (USD/盎司)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
       </div>
-      <div id="macro-cors-note" style="font-size:11px;color:var(--text2);display:none;">⚠️ 全球資料因瀏覽器 CORS 限制無法載入，請直接前往 <a href="https://finance.yahoo.com" target="_blank" style="color:var(--blue);">Yahoo Finance</a> 查詢。</div>
+      <div id="macro-err-note" style="font-size:11px;color:var(--text2);margin-top:6px;display:none;"></div>
     </div>
   </div>
 
@@ -1184,107 +1185,86 @@ function renderCharts() {
 // ================================================================
 // 宏觀環境
 // ================================================================
+const PROXY = 'https://corsproxy.io/?';
 let macroLoaded = false;
+
+async function fetchYF(sym) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`;
+  const r = await fetch(PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(8000) });
+  const j = await r.json();
+  const meta = j?.chart?.result?.[0]?.meta;
+  if (!meta) throw new Error('no meta');
+  const p = meta.regularMarketPrice;
+  const pp = meta.chartPreviousClose || meta.previousClose || p;
+  return { p, pp, chgPct: (p - pp) / pp * 100 };
+}
+
 async function loadMacro() {
   if (macroLoaded) return;
   document.getElementById('macro-loading').style.display = 'block';
   document.getElementById('macro-content').style.display = 'none';
-  const today = new Date(), from = new Date(today); from.setDate(today.getDate() - 10);
-  const toStr = today.toISOString().split('T')[0], fromStr = from.toISOString().split('T')[0];
-  const setMacroCard = (id, price, chg, note) => {
+
+  const setMacroCard = (id, p, chgPct, note) => {
     const card = document.getElementById(id); if (!card) return;
-    const isUp = chg >= 0;
-    card.querySelector('.mc-price').textContent = typeof price === 'number' ? price.toLocaleString(undefined, { maximumFractionDigits: 2 }) : price;
+    const isUp = chgPct >= 0;
+    card.querySelector('.mc-price').textContent = p.toLocaleString(undefined, { maximumFractionDigits: 2 });
     card.querySelector('.mc-price').className = 'mc-price ' + (isUp ? 'up' : 'down');
-    card.querySelector('.mc-chg').textContent = (isUp ? '+' : '') + (typeof chg === 'number' ? chg.toFixed(2) : chg) + '%';
+    card.querySelector('.mc-chg').textContent = (isUp ? '+' : '') + chgPct.toFixed(2) + '%';
     card.querySelector('.mc-chg').className = 'mc-chg ' + (isUp ? 'up' : 'down');
     const noteEl = card.querySelector('.mc-note'); if (noteEl && note) noteEl.textContent = note;
   };
 
   const tags = [];
-  // Taiwan 0050
-  try {
-    const r = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=0050&start_date=${fromStr}&end_date=${toStr}`);
-    const j = await r.json();
-    if (j.data && j.data.length >= 2) {
-      const cur = j.data[j.data.length - 1], prv = j.data[j.data.length - 2];
-      const p = parseFloat(cur.close), pp = parseFloat(prv.close);
-      const chgPct = (p - pp) / pp * 100;
-      setMacroCard('mc-tw-idx', p, chgPct, null);
-      tags.push({ text: `0050 ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
-    }
-  } catch {}
-  // Taiwan 006208
-  try {
-    const r = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=006208&start_date=${fromStr}&end_date=${toStr}`);
-    const j = await r.json();
-    if (j.data && j.data.length >= 2) {
-      const cur = j.data[j.data.length - 1], prv = j.data[j.data.length - 2];
-      const p = parseFloat(cur.close), pp = parseFloat(prv.close);
-      setMacroCard('mc-tw-etf', p, (p - pp) / pp * 100, null);
-    }
-  } catch {}
-  // Taiwan Futures TX
-  try {
-    const r = await fetch(`https://api.finmindtrade.com/api/v4/data?dataset=TaiwanFuturesPrice&data_id=TX&start_date=${fromStr}&end_date=${toStr}`);
-    const j = await r.json();
-    if (j.data && j.data.length >= 2) {
-      const allDates = [...new Set(j.data.map(d => d.date))].sort();
-      const latestDate = allDates[allDates.length - 1], prevDate = allDates[allDates.length - 2];
-      const latestRows = j.data.filter(d => d.date === latestDate);
-      const prevRows = j.data.filter(d => d.date === prevDate);
-      if (latestRows.length > 0 && prevRows.length > 0) {
-        const p = parseFloat(latestRows[latestRows.length - 1].close);
-        const pp = parseFloat(prevRows[prevRows.length - 1].close);
-        const chgPct = (p - pp) / pp * 100;
-        const diff = p - pp;
-        setMacroCard('mc-tw-fut', p, chgPct, `日漲跌 ${diff > 0 ? '+' : ''}${diff.toFixed(0)}點`);
-        tags.push({ text: `台指期 ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
-      }
-    }
-  } catch {}
+  let failCount = 0;
 
-  // Yahoo Finance for global data
-  let globalFailed = false;
-  const yfSymbols = [
-    { id: 'mc-sp500', sym: '%5EGSPC', label: 'S&P 500' },
-    { id: 'mc-nasdaq', sym: '%5EIXIC', label: 'NASDAQ' },
-    { id: 'mc-vix', sym: '%5EVIX', label: 'VIX', noteKey: 'vix' },
-    { id: 'mc-oil', sym: 'CL%3DF', label: 'WTI 原油' },
-    { id: 'mc-usd', sym: 'DX-Y.NYB', label: '美元指數' },
-    { id: 'mc-gold', sym: 'GC%3DF', label: '黃金' },
+  // 所有資料來源：Yahoo Finance via corsproxy.io
+  const allSymbols = [
+    { id: 'mc-tw-idx',      sym: '^TWII',     label: '加權',  tagKey: 'twii' },
+    { id: 'mc-tw-etf0050',  sym: '0050.TW',   label: '0050' },
+    { id: 'mc-tw-etf',      sym: '006208.TW', label: '006208' },
+    { id: 'mc-twd',         sym: 'TWD=X',     label: 'USD/TWD', noteKey: 'twd' },
+    { id: 'mc-sp500',       sym: '^GSPC',     label: 'S&P',   tagKey: 'sp' },
+    { id: 'mc-nasdaq',      sym: '^IXIC',     label: 'NASDAQ' },
+    { id: 'mc-vix',         sym: '^VIX',      label: 'VIX',   noteKey: 'vix' },
+    { id: 'mc-oil',         sym: 'CL=F',      label: 'WTI油' },
+    { id: 'mc-usd',         sym: 'DX-Y.NYB',  label: 'DXY' },
+    { id: 'mc-gold',        sym: 'GC=F',      label: '黃金' },
   ];
-  for (const { id, sym, noteKey } of yfSymbols) {
+
+  await Promise.allSettled(allSymbols.map(async ({ id, sym, label, noteKey, tagKey }) => {
     try {
-      const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`, { signal: AbortSignal.timeout(5000) });
-      const j = await r.json();
-      const meta = j.chart.result[0].meta;
-      const p = meta.regularMarketPrice;
-      const pp = meta.chartPreviousClose || meta.previousClose;
-      const chgPct = pp ? (p - pp) / pp * 100 : 0;
+      const { p, pp, chgPct } = await fetchYF(sym);
       let note = null;
       if (noteKey === 'vix') {
-        note = p < 15 ? '市場樂觀' : p < 20 ? '市場穩定' : p < 30 ? '略有恐慌⚠️' : '高度恐慌🔴';
-        tags.push({ text: `VIX ${p.toFixed(1)} ${note.split(' ')[0]}`, cls: p > 20 ? 'bear' : 'neutral' });
+        note = p < 15 ? '恐慌極低 😌' : p < 20 ? '市場穩定 🟢' : p < 30 ? '略有恐慌 ⚠️' : '高度恐慌 🔴';
+        tags.push({ text: `VIX ${p.toFixed(1)}`, cls: p > 25 ? 'bear' : p > 20 ? 'warn' : 'neutral' });
+      }
+      if (noteKey === 'twd') {
+        note = chgPct > 0.3 ? '台幣貶值 ⚠️' : chgPct < -0.3 ? '台幣升值' : '匯率穩定';
       }
       setMacroCard(id, p, chgPct, note);
-      if (id === 'mc-sp500') tags.push({ text: `S&P ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
-    } catch { globalFailed = true; }
-  }
-  if (globalFailed) document.getElementById('macro-cors-note').style.display = 'block';
+      if (tagKey === 'twii') tags.push({ text: `加權 ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
+      if (tagKey === 'sp')   tags.push({ text: `S&P ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
+    } catch { failCount++; }
+  }));
 
-  // 顯示標籤
+  if (failCount > 0) {
+    const note = document.getElementById('macro-err-note');
+    note.style.display = 'block';
+    note.textContent = `⚠️ ${failCount} 項資料載入失敗，可能是代理服務暫時不穩，請稍後重新整理頁面再試。`;
+  }
+
+  // 狀態列標籤
   const bar = document.getElementById('macro-status-bar');
-  tags.forEach(t => {
-    const span = document.createElement('span');
-    span.className = `macro-tag ${t.cls}`;
-    span.textContent = t.text;
-    bar.appendChild(span);
-  });
+  bar.innerHTML = '<span style="font-size:11px;color:var(--text2);margin-right:4px;">大盤環境：</span>';
   if (tags.length === 0) {
-    const span = document.createElement('span');
-    span.className = 'macro-tag neutral'; span.textContent = '資料載入中，請稍候';
-    bar.appendChild(span);
+    bar.innerHTML += '<span class="macro-tag neutral">資料載入失敗</span>';
+  } else {
+    tags.forEach(t => {
+      const span = document.createElement('span');
+      span.className = `macro-tag ${t.cls}`; span.textContent = t.text;
+      bar.appendChild(span);
+    });
   }
   document.getElementById('macro-loading').style.display = 'none';
   document.getElementById('macro-content').style.display = 'block';
