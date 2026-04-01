@@ -134,6 +134,43 @@ header h1{font-size:15px;font-weight:700;}
 .prob-label{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;padding:0 8px;}
 .no-data{text-align:center;color:var(--text2);padding:40px;font-size:13px;}
 .result-area{display:none;}
+/* Analysis summary card */
+.analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;}
+.analysis-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
+.analysis-rating{font-size:17px;font-weight:800;padding:5px 16px;border-radius:8px;display:inline-block;}
+.analysis-rating.strong-bull{background:rgba(63,185,80,.2);color:#5dde6e;border:1px solid rgba(63,185,80,.4);}
+.analysis-rating.bullish{background:rgba(63,185,80,.12);color:var(--green);}
+.analysis-rating.neutral{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.analysis-rating.bearish{background:rgba(248,81,73,.1);color:var(--red);}
+.analysis-rating.strong-bear{background:rgba(248,81,73,.2);color:#ff6b6b;border:1px solid rgba(248,81,73,.4);}
+.analysis-risk-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;background:var(--bg3);color:var(--text2);}
+.analysis-risk-tag.low{background:rgba(63,185,80,.1);color:var(--green);}
+.analysis-risk-tag.med{background:rgba(210,153,34,.15);color:var(--yellow);}
+.analysis-risk-tag.high{background:rgba(248,81,73,.1);color:var(--red);}
+.strategy-box{background:var(--bg3);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
+.strategy-item{display:flex;flex-direction:column;gap:1px;}
+.strategy-item .si-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+.strategy-item .si-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;}
+.analysis-text{font-size:13px;line-height:1.75;color:var(--text2);margin-bottom:10px;padding:10px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--blue);}
+.analysis-text strong{color:var(--text);}
+.analysis-section-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 6px;}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.achip{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;}
+.achip.pos{background:rgba(63,185,80,.15);color:var(--green);}
+.achip.neg{background:rgba(248,81,73,.1);color:var(--red);}
+.achip.warn{background:rgba(210,153,34,.15);color:var(--yellow);}
+.achip.neu{background:var(--bg3);color:var(--text2);}
+.scenario-wrap{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;}
+.scenario-card{border-radius:8px;padding:10px 12px;text-align:center;}
+.scenario-card.bull-s{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.2);}
+.scenario-card.base-s{background:rgba(88,166,255,.05);border:1px solid rgba(88,166,255,.15);}
+.scenario-card.bear-s{background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.18);}
+.scenario-card .sc-icon{font-size:17px;margin-bottom:3px;}
+.scenario-card .sc-name{font-size:10px;color:var(--text2);margin-bottom:3px;}
+.scenario-card .sc-price{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;}
+.scenario-card .sc-pct{font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:2px;}
+.scenario-card .sc-cond{font-size:10px;color:var(--text2);margin-top:3px;}
+@media(max-width:640px){.scenario-wrap{grid-template-columns:1fr 1fr;}.strategy-box{grid-template-columns:1fr 1fr;}}
 /* BB interpretation chip */
 .bb-chip{display:inline-block;border-radius:4px;font-size:11px;font-weight:600;padding:2px 8px;}
 .bb-chip.lower{background:rgba(63,185,80,.15);color:var(--green);}
@@ -191,6 +228,31 @@ header h1{font-size:15px;font-weight:700;}
           <span class="score-pill" id="pill-exit">出場 0/5</span>
         </div>
       </div>
+      <!-- AI 分析摘要 -->
+      <div class="analysis-card" id="analysis-card" style="display:none;">
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">🤖 AI 分析摘要</div>
+        <div class="analysis-header">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span class="analysis-rating neutral" id="an-rating">中性</span>
+              <span class="analysis-risk-tag" id="an-risk">風險評估：—</span>
+            </div>
+            <div class="chip-row" id="an-chips"></div>
+          </div>
+          <div class="strategy-box">
+            <div class="strategy-item"><div class="si-label">當前價位</div><div class="si-val" id="an-watch">—</div></div>
+            <div class="strategy-item"><div class="si-label">目標價①</div><div class="si-val up" id="an-target1">—</div></div>
+            <div class="strategy-item"><div class="si-label">停損基準</div><div class="si-val down" id="an-stop">—</div></div>
+            <div class="strategy-item"><div class="si-label">目標價②</div><div class="si-val up" id="an-target2">—</div></div>
+          </div>
+        </div>
+        <div class="analysis-text" id="an-text">—</div>
+        <div class="analysis-section-lbl">技術訊號解讀</div>
+        <div class="chip-row" id="an-tech-chips"></div>
+        <div class="analysis-section-lbl">情境推演</div>
+        <div class="scenario-wrap" id="an-scenarios"></div>
+      </div>
+
       <!-- 股價標題 -->
       <div class="stock-header">
         <div class="stock-title-row"><h2 id="r-name">—</h2><span id="r-date">—</span></div>
@@ -777,6 +839,202 @@ function setEl(id, text, color) {
   if (color) el.style.color = color;
 }
 
+// ================================================================
+// AI 分析摘要
+// ================================================================
+function generateAnalysis() {
+  const card = document.getElementById('analysis-card');
+  if (!stockData.currentPrice) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const p = stockData.currentPrice;
+  const atr = stockData.atr || (p * 0.015);
+  const ma5 = stockData.ma5, ma10 = stockData.ma10, ma20 = stockData.ma20;
+  const bb = stockData.bb;
+  const rsi = stockData.rsi;
+
+  // Re-derive scores
+  const selectIds = ['trend', 'ma', 'vol', 'chip', 'inst', 'box'];
+  const entryIds  = ['breakout', 'kline', 'macd', 'kd', 'obv'];
+  const exitIds   = ['exitvol', 'exitma', 'exitmacd', 'exitchip', 'exitrsi'];
+  const sel = selectIds.filter(id => getPass(id) === true).length;
+  const ent = entryIds.filter(id => getPass(id) === true).length;
+  const ext = exitIds.filter(id => getPass(id) === true).length;
+
+  // Rating
+  let rating, ratingCls, riskLevel, riskCls;
+  if (ext >= 2) {
+    rating = '⛔ 建議出場'; ratingCls = 'strong-bear';
+    riskLevel = '風險：高'; riskCls = 'high';
+  } else if (sel >= 5 && ent >= 4) {
+    rating = '🔥 強勢偏多'; ratingCls = 'strong-bull';
+    riskLevel = '風險：低'; riskCls = 'low';
+  } else if (sel >= 3 && ent >= 3) {
+    rating = '✅ 偏多'; ratingCls = 'bullish';
+    riskLevel = '風險：中低'; riskCls = 'med';
+  } else if (sel >= 3 || ent >= 2) {
+    rating = '⚪ 中性觀望'; ratingCls = 'neutral';
+    riskLevel = '風險：中'; riskCls = 'med';
+  } else {
+    rating = '❌ 偏空'; ratingCls = 'bearish';
+    riskLevel = '風險：高'; riskCls = 'high';
+  }
+  const anRating = document.getElementById('an-rating');
+  anRating.textContent = rating; anRating.className = 'analysis-rating ' + ratingCls;
+  const anRisk = document.getElementById('an-risk');
+  anRisk.textContent = riskLevel; anRisk.className = 'analysis-risk-tag ' + riskCls;
+
+  // Strategy price levels
+  const maAligned = ma5 && ma10 && ma20 && ma5 > ma10 && ma10 > ma20;
+  const hardStop = parseFloat((p * 0.92).toFixed(2));
+  const maStop = ma5 ? parseFloat(Math.min(ma5, ma10 || ma5).toFixed(2)) : null;
+  const effectiveStop = maStop ? Math.min(hardStop, maStop) : hardStop;
+  const target1 = bb?.currentUpper ? parseFloat(bb.currentUpper.toFixed(2)) : parseFloat((p + atr * 1.5).toFixed(2));
+  const target2 = parseFloat((p + atr * 3).toFixed(2));
+  document.getElementById('an-watch').textContent = p.toFixed(2);
+  document.getElementById('an-target1').textContent = target1.toFixed(2);
+  document.getElementById('an-target2').textContent = target2.toFixed(2);
+  document.getElementById('an-stop').textContent = effectiveStop.toFixed(2);
+
+  // Top summary chips (fundamental conditions)
+  const topChips = [];
+  if (getPass('inst') === true)  topChips.push({ text: '法人買超', cls: 'pos' });
+  else if (getPass('inst') === false) topChips.push({ text: '法人賣超', cls: 'neg' });
+  if (getPass('chip') === true)  topChips.push({ text: '籌碼健康', cls: 'pos' });
+  else if (getPass('chip') === false) topChips.push({ text: '籌碼鬆動', cls: 'neg' });
+  if (getPass('vol') === true)   topChips.push({ text: '量縮回檔', cls: 'pos' });
+  if (getPass('breakout') === true) topChips.push({ text: '突破放量', cls: 'pos' });
+  if (ext >= 2) topChips.push({ text: `出場訊號 ${ext} 項`, cls: 'neg' });
+  document.getElementById('an-chips').innerHTML = topChips.map(s =>
+    `<span class="achip ${s.cls}">${s.text}</span>`
+  ).join('');
+
+  // Technical signal chips
+  const techChips = [];
+  if (maAligned) techChips.push({ text: '均線多頭排列', cls: 'pos' });
+  else if (ma5 && ma10 && ma20 && ma5 < ma10 && ma10 < ma20) techChips.push({ text: '均線空頭排列', cls: 'neg' });
+  else if (ma5 && ma10 && ma20) techChips.push({ text: '均線糾結整理', cls: 'warn' });
+
+  if (stockData.macdBull) techChips.push({ text: 'MACD 偏多', cls: 'pos' });
+  else techChips.push({ text: 'MACD 偏空', cls: 'neg' });
+
+  if (stockData.obvBull) techChips.push({ text: 'OBV 上升', cls: 'pos' });
+  else techChips.push({ text: 'OBV 下降', cls: 'neg' });
+
+  if (rsi !== null && rsi !== undefined) {
+    if (rsi > 80)      techChips.push({ text: `RSI ${rsi} 超買`, cls: 'neg' });
+    else if (rsi > 65) techChips.push({ text: `RSI ${rsi} 強勢`, cls: 'pos' });
+    else if (rsi > 45) techChips.push({ text: `RSI ${rsi} 中性`, cls: 'neu' });
+    else if (rsi > 30) techChips.push({ text: `RSI ${rsi} 偏弱`, cls: 'warn' });
+    else               techChips.push({ text: `RSI ${rsi} 超賣`, cls: 'pos' });
+  }
+
+  if (bb && bb.bandwidth !== null) {
+    if (bb.bandwidth < 5)       techChips.push({ text: `布林收窄 ${bb.bandwidth}%`, cls: 'warn' });
+    else if (bb.bandwidth > 15) techChips.push({ text: `布林走擴 ${bb.bandwidth}%`, cls: 'pos' });
+  }
+  if (bb) {
+    if (p < bb.currentLower * 0.99)      techChips.push({ text: `跌破下軌 ${bb.currentLower}`, cls: 'neg' });
+    else if (p > bb.currentUpper * 1.01) techChips.push({ text: `突破上軌 ${bb.currentUpper}`, cls: 'pos' });
+    else if (p <= bb.currentLower * 1.025) techChips.push({ text: `貼近下緣 ${bb.currentLower}`, cls: 'pos' });
+    else if (p >= bb.currentUpper * 0.975) techChips.push({ text: `觸及上緣 ${bb.currentUpper}`, cls: 'warn' });
+  }
+  if (getPass('exitma') === true) techChips.push({ text: '跌破均線支撐', cls: 'neg' });
+  document.getElementById('an-tech-chips').innerHTML = techChips.map(s =>
+    `<span class="achip ${s.cls}">${s.text}</span>`
+  ).join('');
+
+  // Natural language summary
+  const parts = [];
+
+  // Trend & momentum
+  if (maAligned && stockData.macdBull && stockData.obvBull) {
+    parts.push('均線多頭排列、MACD 偏多、OBV 上升三者同步，<strong>短期動能明確偏強</strong>，趨勢方向向上');
+  } else if (maAligned && stockData.macdBull) {
+    parts.push('<strong>均線多頭排列且 MACD 偏多</strong>，方向偏多，但 OBV 尚未明顯跟進，量能待確認');
+  } else if (maAligned && !stockData.macdBull) {
+    parts.push('均線排列尚屬多頭，但 <strong>MACD 偏空</strong>，動能出現分歧，多頭力道減弱，需留意');
+  } else if (!maAligned && !stockData.macdBull) {
+    parts.push('均線空頭排列且 MACD 偏空，<strong>技術面偏弱</strong>，短期壓力明顯，宜謹慎');
+  } else {
+    parts.push('多空指標<strong>尚未形成共識</strong>，技術面方向不明，以觀望為主');
+  }
+
+  // RSI interpretation
+  if (rsi !== null && rsi !== undefined) {
+    if (rsi > 80)      parts.push(`RSI 已達 <strong>${rsi}</strong>，進入超買區，注意短線獲利回吐壓力，不宜追高`);
+    else if (rsi > 70) parts.push(`RSI ${rsi} 偏高，動能強但接近過熱，可持有但避免加碼`);
+    else if (rsi < 30) parts.push(`RSI 僅 <strong>${rsi}</strong>，已跌入超賣區，跌深反彈機率增加，可觀察止跌訊號`);
+    else if (rsi < 45 && !maAligned) parts.push(`RSI ${rsi} 偏低，配合均線空頭，賣壓仍重`);
+  }
+
+  // Chip & institutional
+  const instPass = getPass('inst');
+  const chipPass = getPass('chip');
+  if (instPass === true && chipPass === true) {
+    parts.push('法人買超且籌碼面健康，<strong>資金面偏向支撐</strong>，後續上漲動能較有依據');
+  } else if (instPass === true && chipPass === false) {
+    parts.push('法人雖有買超，但融資同步增加，<strong>散戶追高跡象明顯</strong>，籌碼健康度下降，留意追高風險');
+  } else if (instPass === false) {
+    parts.push('法人目前呈賣超，<strong>籌碼面有壓力</strong>，需等待法人買盤轉正再評估進場');
+  }
+
+  // BB position
+  if (bb) {
+    if (p <= bb.currentLower * 1.025 && p >= bb.currentLower * 0.985) {
+      parts.push(`股價貼近<strong>布林下緣 ${bb.currentLower}</strong>，具短線支撐意義，配合止跌K線可留意反彈機會`);
+    } else if (p >= bb.currentUpper * 0.975 && p <= bb.currentUpper * 1.01) {
+      parts.push(`股價觸及<strong>布林上緣 ${bb.currentUpper}</strong>，短線壓力增加，若量縮可能出現回調`);
+    } else if (p > bb.currentUpper * 1.01) {
+      parts.push(`股價已<strong>突破布林上軌</strong>，顯示強勢行情，但需觀察量能是否支撐`);
+    }
+  }
+
+  // Exit signals
+  if (ext >= 2) {
+    parts.push(`目前已觸發 <strong>${ext} 項出場訊號</strong>，若持有中請優先評估是否減碼或出場`);
+  } else if (ext === 1) {
+    parts.push('有 1 項出場訊號需留意，持有部位建議設好停損點觀察');
+  }
+
+  // Stop loss reminder
+  parts.push(`操作紀律：跌破均線或達 <strong>-8% 硬停損（${hardStop.toFixed(2)}）</strong>，擇先出場，不凹單`);
+
+  document.getElementById('an-text').innerHTML = parts.join('；') + '。';
+
+  // Scenario cards
+  const bullPct  = ((target1 - p) / p * 100);
+  const basePct  = ((p + atr * 0.5 - p) / p * 100);
+  const bearPct  = ((effectiveStop - p) / p * 100);
+  const baseTarget = parseFloat((p + atr * 0.5).toFixed(2));
+
+  const topSupStr = maStop ? `跌破均線 ${maStop}` : `跌破支撐 ${hardStop}`;
+  const topResStr = bb?.currentUpper ? `突破 BB 上軌 ${bb.currentUpper}` : '量能放大突破壓力';
+
+  document.getElementById('an-scenarios').innerHTML = `
+    <div class="scenario-card bull-s">
+      <div class="sc-icon">🔺</div>
+      <div class="sc-name">樂觀情境</div>
+      <div class="sc-price up">${target1.toFixed(2)}</div>
+      <div class="sc-pct up">${bullPct >= 0 ? '+' : ''}${bullPct.toFixed(1)}%</div>
+      <div class="sc-cond">${topResStr}</div>
+    </div>
+    <div class="scenario-card base-s">
+      <div class="sc-icon">⚖️</div>
+      <div class="sc-name">基準情境</div>
+      <div class="sc-price">${baseTarget.toFixed(2)}</div>
+      <div class="sc-pct">${basePct >= 0 ? '+' : ''}${basePct.toFixed(1)}%</div>
+      <div class="sc-cond">區間震盪整理</div>
+    </div>
+    <div class="scenario-card bear-s">
+      <div class="sc-icon">🔻</div>
+      <div class="sc-name">保守情境</div>
+      <div class="sc-price down">${effectiveStop.toFixed(2)}</div>
+      <div class="sc-pct down">${bearPct >= 0 ? '+' : ''}${bearPct.toFixed(1)}%</div>
+      <div class="sc-cond">${topSupStr}停損</div>
+    </div>`;
+}
+
 function updateScores() {
   const selectIds = ['trend', 'ma', 'vol', 'chip', 'inst', 'box'];
   const entryIds = ['breakout', 'kline', 'macd', 'kd', 'obv'];
@@ -808,6 +1066,7 @@ function updateScores() {
     vt.className = 'verdict-top no-enter'; vl.textContent = '⛔ 訊號不足';
     vs.textContent = `選股 ${sel}/6、訊號 ${ent}/5，暫不進場`;
   }
+  generateAnalysis();
 }
 function calcPnl() {
   const cost = parseFloat(document.getElementById('cost-input').value);
