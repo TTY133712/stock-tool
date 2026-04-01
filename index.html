@@ -158,7 +158,7 @@ header h1{font-size:15px;font-weight:700;}
   <div class="search-bar">
     <input type="text" id="stock-input" placeholder="輸入股票代號（例如：2330）" maxlength="6">
     <input type="date" id="date-input" title="選擇評估日期（留空為最新）">
-    <button type="button" class="btn btn-primary" id="search-btn" onclick="evaluate()">評估</button>
+    <button type="button" class="btn btn-primary" id="search-btn" onclick="runEval()">評估</button>
   </div>
   <div class="hist-bar" id="hist-bar" style="display:none;">
     <span class="hist-label">最近：</span>
@@ -620,7 +620,7 @@ function renderHistory() {
     if (!hist.length) { bar.style.display = 'none'; return; }
     bar.style.display = 'flex';
     chips.innerHTML = hist.map(c =>
-      `<button class="hist-chip" onclick="document.getElementById('stock-input').value='${c}';evaluate()">${c}</button>`
+      `<button class="hist-chip" onclick="document.getElementById('stock-input').value='${c}';runEval()">${c}</button>`
     ).join('');
   } catch {}
 }
@@ -826,9 +826,9 @@ function setAuto(id, val, statusId, valueText) {
 // ================================================================
 // 主要評估
 // ================================================================
-document.getElementById('stock-input').addEventListener('keydown', e => { if (e.key === 'Enter') evaluate(); });
+document.getElementById('stock-input').addEventListener('keydown', e => { if (e.key === 'Enter') runEval(); });
 
-async function evaluate() {
+async function runEval() {
   const code = document.getElementById('stock-input').value.trim();
   if (!code) { showError('請輸入股票代號'); return; }
   document.getElementById('error-box').style.display = 'none';
