@@ -924,18 +924,25 @@ async function evaluate() {
           const net = Math.round((parseInt(d.buy || 0) - parseInt(d.sell || 0)) / 1000);
           instNet += net;
           const n = d.name;
-          if (n.includes('外資')) instDetail.foreign = (instDetail.foreign || 0) + net;
-          else if (n.includes('投信')) instDetail.trust = (instDetail.trust || 0) + net;
-          else if (n.includes('自營')) instDetail.dealer = (instDetail.dealer || 0) + net;
+          // FinMind 回傳英文名，同時支援中文（相容性）
+          const isForeign = n === 'Foreign_Investor' || n === 'Foreign_Dealer_Self' || n.includes('外資');
+          const isTrust   = n === 'Investment_Trust' || n.includes('投信');
+          const isDealer  = (n === 'Dealer_self' || n === 'Dealer_Hedging' || n.includes('自營')) && !isForeign;
+          if (isForeign) instDetail.foreign = (instDetail.foreign || 0) + net;
+          else if (isTrust) instDetail.trust = (instDetail.trust || 0) + net;
+          else if (isDealer) instDetail.dealer = (instDetail.dealer || 0) + net;
         });
         // 5日累積
         const last5Dates = allDates.slice(-5);
         iJson.data.filter(d => last5Dates.includes(d.date)).forEach(d => {
           const net = Math.round((parseInt(d.buy || 0) - parseInt(d.sell || 0)) / 1000);
           const n = d.name;
-          if (n.includes('外資')) inst5d.foreign += net;
-          else if (n.includes('投信')) inst5d.trust += net;
-          else if (n.includes('自營')) inst5d.dealer += net;
+          const isForeign5 = n === 'Foreign_Investor' || n === 'Foreign_Dealer_Self' || n.includes('外資');
+          const isTrust5   = n === 'Investment_Trust' || n.includes('投信');
+          const isDealer5  = (n === 'Dealer_self' || n === 'Dealer_Hedging' || n.includes('自營')) && !isForeign5;
+          if (isForeign5) inst5d.foreign += net;
+          else if (isTrust5) inst5d.trust += net;
+          else if (isDealer5) inst5d.dealer += net;
           inst5d.total += net;
         });
       }
