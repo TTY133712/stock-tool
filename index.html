@@ -74,6 +74,7 @@ header h1{font-size:15px;font-weight:700;}
 .toggle-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:11px;padding:3px 9px;transition:all .15s;white-space:nowrap;}
 .toggle-btn.on{background:rgba(63,185,80,.15);border-color:var(--green);color:var(--green);}
 .toggle-btn.off{background:rgba(248,81,73,.1);border-color:var(--red);color:var(--red);}
+.toggle-btn.auto{background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.3);color:var(--blue);}
 /* Exit section */
 .exit-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px;}
 .exit-section h3{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
@@ -751,7 +752,15 @@ function toggle(id) {
   } else if (manualToggles[id] === true) {
     manualToggles[id] = false; btn.textContent = '❌ 不符'; btn.className = 'toggle-btn off'; statusEl.textContent = '❌';
   } else {
-    manualToggles[id] = null; btn.textContent = btn.dataset.default || '手動調整'; btn.className = 'toggle-btn'; statusEl.textContent = '⬜';
+    manualToggles[id] = null;
+    const hasAuto = stockData['auto_' + id] !== undefined && stockData['auto_' + id] !== null;
+    if (hasAuto) {
+      btn.textContent = '🤖 自動'; btn.className = 'toggle-btn auto';
+      statusEl.textContent = stockData['auto_' + id] ? '✅' : '❌';
+    } else {
+      btn.textContent = '手動判斷'; btn.className = 'toggle-btn';
+      statusEl.textContent = '⬜';
+    }
   }
   updateScores();
 }
@@ -818,9 +827,9 @@ function setAuto(id, val, statusId, valueText) {
   if (statusEl && !manualToggles[id]) statusEl.textContent = val ? '✅' : '❌';
   const valEl = document.getElementById('cv-' + id);
   if (valEl) valEl.textContent = valueText;
-  // reset manual override btn if present
+  // 自動偵測完成後，按鈕改顯示「🤖 自動」
   const btn = document.getElementById('btn-' + id);
-  if (btn && !manualToggles[id]) { btn.textContent = btn.dataset.default || '手動調整'; btn.className = 'toggle-btn'; }
+  if (btn && !manualToggles[id]) { btn.textContent = '🤖 自動'; btn.className = 'toggle-btn auto'; }
 }
 
 // ================================================================
