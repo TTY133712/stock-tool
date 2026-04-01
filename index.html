@@ -177,13 +177,22 @@ header h1{font-size:15px;font-weight:700;}
 .bb-chip.upper{background:rgba(248,81,73,.1);color:var(--red);}
 .bb-chip.mid{background:var(--bg3);color:var(--text2);}
 .bb-chip.breakout{background:rgba(210,153,34,.15);color:var(--yellow);}
+/* Macro analysis */
+.macro-analysis-box{background:var(--bg3);border-radius:8px;padding:12px 16px;margin-bottom:12px;border-left:3px solid var(--blue);}
+.macro-analysis-box .ma-text{font-size:13px;line-height:1.75;color:var(--text2);}
+.macro-analysis-box .ma-text strong{color:var(--text);}
+.macro-env-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.macro-env-badge{font-size:14px;font-weight:800;padding:4px 14px;border-radius:8px;}
+.macro-env-badge.green{background:rgba(63,185,80,.18);color:var(--green);}
+.macro-env-badge.yellow{background:rgba(210,153,34,.18);color:var(--yellow);}
+.macro-env-badge.red{background:rgba(248,81,73,.18);color:var(--red);}
 @media(max-width:640px){
   .quick-grid{grid-template-columns:repeat(2,1fr);}
   .macro-grid{grid-template-columns:repeat(2,1fr);}
   .stock-header{flex-direction:column;align-items:flex-start;}
   .price-big{font-size:24px;}
   .cond-value{display:none;}
-  .backtest-stats{grid-template-columns:repeat(2,1fr);}
+  .scenario-wrap{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
@@ -210,7 +219,6 @@ header h1{font-size:15px;font-weight:700;}
     <button class="tab-btn active" onclick="switchTab('eval')">📋 選股評估</button>
     <button class="tab-btn" onclick="switchTab('chart')">📈 技術圖表</button>
     <button class="tab-btn" onclick="switchTab('macro')">🌐 宏觀環境</button>
-    <button class="tab-btn" onclick="switchTab('backtest')">🔮 落點預估</button>
   </div>
 
   <!-- ===== Tab 1: 選股評估 ===== -->
@@ -261,18 +269,7 @@ header h1{font-size:15px;font-weight:700;}
           <div class="price-chg" id="r-chg">—</div>
         </div>
       </div>
-      <!-- Quick stats -->
-      <div class="quick-grid">
-        <div class="quick-card"><div class="ql">MA5 / MA10 / MA20</div><div class="qv" id="q-ma">— / — / —</div></div>
-        <div class="quick-card"><div class="ql">成交量 (張)</div><div class="qv" id="q-vol">—</div><div class="qv2" id="q-vol-note">—</div></div>
-        <div class="quick-card"><div class="ql">OBV 趨勢</div><div class="qv" id="q-obv">—</div><div class="qv2" id="q-obv-note">—</div></div>
-        <div class="quick-card"><div class="ql">布林通道位置</div><div class="qv" id="q-bb-pos">—</div><div class="qv2" id="q-bb-vals">—</div></div>
-        <div class="quick-card"><div class="ql">融資增減率</div><div class="qv" id="q-margin-rate">—</div><div class="qv2" id="q-margin-abs">—</div></div>
-        <div class="quick-card"><div class="ql">融券增減</div><div class="qv" id="q-short-chg">—</div><div class="qv2" id="q-short-abs">—</div></div>
-        <div class="quick-card"><div class="ql">法人買超佔比 (5日)</div><div class="qv" id="q-chip-conc">—</div><div class="qv2" id="q-chip-conc-note">—</div></div>
-        <div class="quick-card"><div class="ql">法人合計 (今日)</div><div class="qv" id="q-inst-total">—</div><div class="qv2" id="q-inst-5d">—</div></div>
-      </div>
-      <!-- 三大法人分別 -->
+      <!-- 三大法人分別（移至前方，重要籌碼資訊優先顯示） -->
       <div class="inst-row">
         <span class="inst-label">三大法人</span>
         <div class="inst-item"><div class="ii-name">外資</div><div class="ii-val" id="ii-foreign">—</div></div>
@@ -284,6 +281,17 @@ header h1{font-size:15px;font-weight:700;}
         <div class="inst-item"><div class="ii-name">外資5日累積</div><div class="ii-val" id="ii-foreign-5d">—</div></div>
         <div class="inst-divider"></div>
         <div class="inst-item"><div class="ii-name">投信5日累積</div><div class="ii-val" id="ii-trust-5d">—</div></div>
+      </div>
+      <!-- Quick stats -->
+      <div class="quick-grid">
+        <div class="quick-card"><div class="ql">MA5 / MA10 / MA20</div><div class="qv" id="q-ma">— / — / —</div></div>
+        <div class="quick-card"><div class="ql">成交量 (張)</div><div class="qv" id="q-vol">—</div><div class="qv2" id="q-vol-note">—</div></div>
+        <div class="quick-card"><div class="ql">OBV 趨勢</div><div class="qv" id="q-obv">—</div><div class="qv2" id="q-obv-note">—</div></div>
+        <div class="quick-card"><div class="ql">布林通道位置</div><div class="qv" id="q-bb-pos">—</div><div class="qv2" id="q-bb-vals">—</div></div>
+        <div class="quick-card"><div class="ql">融資增減率</div><div class="qv" id="q-margin-rate">—</div><div class="qv2" id="q-margin-abs">—</div></div>
+        <div class="quick-card"><div class="ql">融券增減</div><div class="qv" id="q-short-chg">—</div><div class="qv2" id="q-short-abs">—</div></div>
+        <div class="quick-card"><div class="ql">法人買超佔比 (5日)</div><div class="qv" id="q-chip-conc">—</div><div class="qv2" id="q-chip-conc-note">—</div></div>
+        <div class="quick-card"><div class="ql">法人合計 (今日)</div><div class="qv" id="q-inst-total">—</div><div class="qv2" id="q-inst-5d">—</div></div>
       </div>
       <!-- 選股條件 -->
       <div class="sop-section">
@@ -390,6 +398,32 @@ header h1{font-size:15px;font-weight:700;}
           <div class="cond-value" id="cv-exitrsi">—</div><div></div>
         </div>
       </div>
+
+      <!-- ===== 隔日落點預估（併入選股評估） ===== -->
+      <div id="pred-placeholder" class="no-data" style="display:none;"></div>
+      <div id="pred-content" style="display:none;">
+        <!-- ATR 波動區間 -->
+        <div class="pred-card">
+          <h3>📊 隔日波動預估區間 <span class="score-badge" id="pred-atr-badge">ATR：—</span></h3>
+          <div id="pred-range-rows"></div>
+        </div>
+        <!-- 支撐/壓力雙欄 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="pred-card" style="margin-bottom:0;">
+            <h3>📍 關鍵支撐</h3>
+            <div id="pred-supports">—</div>
+          </div>
+          <div class="pred-card" style="margin-bottom:0;">
+            <h3>🚧 關鍵壓力</h3>
+            <div id="pred-resistances">—</div>
+          </div>
+        </div>
+        <!-- 多空評分 -->
+        <div class="pred-card">
+          <h3>📈 多空評分</h3>
+          <div id="pred-signal"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -402,7 +436,7 @@ header h1{font-size:15px;font-weight:700;}
       <div class="chart-card"><h3>MACD（DIF / DEA / Histogram）</h3><div class="chart-wrap h150"><canvas id="macd-chart"></canvas></div></div>
       <div class="chart-card"><h3>KD 指標</h3><div class="chart-wrap h150"><canvas id="kd-chart"></canvas></div></div>
       <div class="chart-card"><h3>RSI(14)</h3><div class="chart-wrap h150"><canvas id="rsi-chart"></canvas></div></div>
-      <div class="chart-card"><h3>OBV（能量潮）</h3><div class="chart-wrap h120"><canvas id="obv-chart"></canvas></div></div>
+      <div class="chart-card"><h3>OBV Oscillator（DIF / Signal / Histogram）</h3><div class="chart-wrap h150"><canvas id="obv-chart"></canvas></div></div>
     </div>
   </div>
 
@@ -410,9 +444,16 @@ header h1{font-size:15px;font-weight:700;}
   <div class="tab-content" id="tab-macro">
     <div id="macro-loading" class="no-data">宏觀資料載入中…</div>
     <div id="macro-content" style="display:none;">
+      <!-- 環境燈號分析 -->
+      <div class="macro-analysis-box" id="macro-analysis-box">
+        <div class="macro-env-bar">
+          <span class="macro-env-badge green" id="macro-env-badge">🟢 環境適合</span>
+          <div class="chip-row" id="macro-env-chips"></div>
+        </div>
+        <div class="ma-text" id="macro-analysis-text">—</div>
+      </div>
       <div class="macro-status-bar" id="macro-status-bar">
-        <span style="font-size:11px;color:var(--text2);margin-right:4px;">大盤環境：</span>
-        <!-- tags injected by JS -->
+        <span style="font-size:11px;color:var(--text2);margin-right:4px;">即時數據：</span>
       </div>
       <div class="macro-section-title">🇹🇼 台灣市場</div>
       <div class="macro-grid" id="macro-tw-grid">
@@ -431,39 +472,6 @@ header h1{font-size:15px;font-weight:700;}
         <div class="macro-card" id="mc-gold"><div class="mc-label">黃金 (USD/盎司)</div><div class="mc-price">—</div><div class="mc-chg">—</div></div>
       </div>
       <div id="macro-err-note" style="font-size:11px;color:var(--text2);margin-top:6px;display:none;"></div>
-    </div>
-  </div>
-
-  <!-- ===== Tab 4: 落點預估 ===== -->
-  <div class="tab-content" id="tab-backtest">
-    <div id="pred-placeholder" class="no-data">請先查詢個股，再查看隔日落點預估</div>
-    <div id="pred-content" style="display:none;">
-      <!-- ATR 波動區間 -->
-      <div class="pred-card">
-        <h3>📊 隔日波動預估區間 <span class="score-badge" id="pred-atr-badge">ATR：—</span></h3>
-        <div id="pred-range-rows"></div>
-      </div>
-      <!-- 支撐/壓力雙欄 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-        <div class="pred-card" style="margin-bottom:0;">
-          <h3>📍 關鍵支撐</h3>
-          <div id="pred-supports">—</div>
-        </div>
-        <div class="pred-card" style="margin-bottom:0;">
-          <h3>🚧 關鍵壓力</h3>
-          <div id="pred-resistances">—</div>
-        </div>
-      </div>
-      <!-- 情境分析 -->
-      <div class="pred-card">
-        <h3>🎯 情境分析</h3>
-        <div id="pred-scenarios"></div>
-      </div>
-      <!-- 多空評分 -->
-      <div class="pred-card">
-        <h3>📈 多空評分</h3>
-        <div id="pred-signal"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -577,6 +585,26 @@ function calcOBV(closes, volumes) {
   }
   return obv;
 }
+// OBV Oscillator：把 MACD 公式套用到 OBV，天然零軸中心
+// DIF = EMA(OBV,12) - EMA(OBV,26)  Signal = EMA(DIF,9)  Hist = DIF - Signal
+function calcOBVMomentum(closes, volumes) {
+  const obv = calcOBV(closes, volumes);
+  const ema12 = calcEMA(obv, 12);
+  const ema26 = calcEMA(obv, 26);
+  const dif = obv.map((_, i) =>
+    ema12[i] !== null && ema26[i] !== null ? parseFloat((ema12[i] - ema26[i]).toFixed(2)) : null
+  );
+  const validStart = dif.findIndex(v => v !== null);
+  if (validStart < 0) return { dif, signal: dif.map(() => null), hist: dif.map(() => null), isBullish: false };
+  const sigRaw = calcEMA(dif.slice(validStart), 9);
+  const signal = new Array(validStart).fill(null).concat(sigRaw);
+  const hist = dif.map((v, i) =>
+    v !== null && signal[i] !== null ? parseFloat((v - signal[i]).toFixed(2)) : null
+  );
+  const n = dif.length;
+  const isBullish = dif[n-1] !== null && signal[n-1] !== null && dif[n-1] > signal[n-1];
+  return { dif, signal, hist, isBullish };
+}
 function getBBInterpretation(curPrice, bb) {
   if (!bb.currentLower || !bb.currentUpper) return { text: '資料不足', cls: 'mid', ok: null };
   const lo = bb.currentLower, hi = bb.currentUpper, mid = bb.currentMiddle;
@@ -656,13 +684,12 @@ function showError(msg) {
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach((b, i) => {
-    b.classList.toggle('active', ['eval', 'chart', 'macro', 'backtest'][i] === tab);
+    b.classList.toggle('active', ['eval', 'chart', 'macro'][i] === tab);
   });
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'chart' && chartData.closes) renderCharts();
   if (tab === 'macro') loadMacro();
-  if (tab === 'backtest') showPrediction();
 }
 
 // ================================================================
@@ -705,7 +732,7 @@ function showPrediction() {
   const ph = document.getElementById('pred-placeholder');
   const pc = document.getElementById('pred-content');
   if (!stockData.currentPrice || !stockData.atr) {
-    ph.style.display = 'block'; pc.style.display = 'none'; return;
+    ph.style.display = 'none'; pc.style.display = 'none'; return;
   }
   ph.style.display = 'none'; pc.style.display = 'block';
 
@@ -757,28 +784,6 @@ function showPrediction() {
   document.getElementById('pred-resistances').innerHTML = resistances.length
     ? resistances.map(lv => fmtLevelItem(lv, 'up')).join('')
     : '<div style="color:var(--text2);font-size:12px;padding:8px 0;">無明顯壓力位</div>';
-
-  // 情境分析
-  const topRes = resistances[0], topSup = supports[0];
-  const scenarios = [];
-  if (topRes) scenarios.push({
-    icon: '✅',
-    title: `突破情境：站上 ${topRes.label} ${topRes.val}`,
-    desc: `若量能配合突破壓力位，短期目標看 ${(topRes.val + atr * 0.5).toFixed(2)}，止損設 ${topSup ? topSup.val : (p - atr * 0.5).toFixed(2)}`
-  });
-  scenarios.push({
-    icon: '⚠️',
-    title: `整理情境：在 ${(topSup?.val ?? (p - atr * 0.5)).toFixed(2)} ~ ${(topRes?.val ?? (p + atr * 0.5)).toFixed(2)} 之間震盪`,
-    desc: `量縮整理，等待方向明確再進出，避免追高殺低`
-  });
-  if (topSup) scenarios.push({
-    icon: '❌',
-    title: `跌破情境：失守 ${topSup.label} ${topSup.val}`,
-    desc: `跌破支撐需注意下一支撐位 ${supports[1] ? supports[1].val : (p - atr).toFixed(2)}，建議減碼或停損`
-  });
-  document.getElementById('pred-scenarios').innerHTML = scenarios.map(s =>
-    `<div class="scen-row"><span class="scen-icon">${s.icon}</span><div class="scen-text"><strong>${s.title}</strong>${s.desc}</div></div>`
-  ).join('');
 
   // 多空評分
   let bullCount = 0, total = 0;
@@ -1344,7 +1349,8 @@ async function runEval() {
       kd: calcKD(h60, l60, c60),
       rsi: calcRSI(c60),
       bb: calcBollinger(c60),
-      obv: calcOBV(c60, v60)
+      obv: calcOBV(c60, v60),
+      obvMom: calcOBVMomentum(c60, v60)
     };
 
     // 儲存 ATR 與關鍵價位供落點預估使用
@@ -1363,6 +1369,7 @@ async function runEval() {
     switchTab('eval');
     updateScores();
     calcPnl();
+    showPrediction();
   } catch (err) {
     showError('查詢失敗，請稍後再試（' + err.message + '）');
   } finally {
@@ -1432,10 +1439,14 @@ function renderCharts() {
     ]},
     options: { ...BOPTS, scales: { ...BOPTS.scales, y: { ...BOPTS.scales.y, min: 0, max: 100 } } }
   });
+  const { obvMom } = chartData;
+  const obvHColors = obvMom.hist.map(v => v === null ? 'rgba(0,0,0,0)' : v >= 0 ? 'rgba(248,81,73,0.55)' : 'rgba(63,185,80,0.55)');
   charts.obv = new Chart(document.getElementById('obv-chart').getContext('2d'), {
-    type: 'line',
+    type: 'bar',
     data: { labels: dates, datasets: [
-      { label: 'OBV', data: obv, borderColor: '#ff7b72', backgroundColor: 'rgba(255,123,114,0.06)', borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: true },
+      { type: 'line', label: 'DIF', data: obvMom.dif, borderColor: '#ff7b72', borderWidth: 1.5, pointRadius: 0, tension: 0.2 },
+      { type: 'line', label: 'Signal', data: obvMom.signal, borderColor: '#58a6ff', borderWidth: 1.5, pointRadius: 0, tension: 0.2 },
+      { type: 'bar',  label: 'Hist', data: obvMom.hist, backgroundColor: obvHColors, borderWidth: 0 },
     ]},
     options: { ...BOPTS }
   });
@@ -1446,6 +1457,7 @@ function renderCharts() {
 // ================================================================
 const PROXY = 'https://corsproxy.io/?';
 let macroLoaded = false;
+let macroSnapshot = {};  // 儲存載入的宏觀數據供分析使用
 
 async function fetchYF(sym) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=5d`;
@@ -1456,6 +1468,124 @@ async function fetchYF(sym) {
   const p = meta.regularMarketPrice;
   const pp = meta.chartPreviousClose || meta.previousClose || p;
   return { p, pp, chgPct: (p - pp) / pp * 100 };
+}
+
+function generateMacroAnalysis() {
+  const d = macroSnapshot;
+  const parts = [];
+  const chips = [];
+
+  // VIX
+  const vix = d.vix?.p;
+  let envScore = 0; // positive = bullish, negative = bearish
+
+  if (vix !== undefined) {
+    if (vix < 15) {
+      parts.push(`VIX 僅 <strong>${vix.toFixed(1)}</strong>，市場情緒極度平靜，恐慌極低`);
+      chips.push({ text: `VIX ${vix.toFixed(1)} 平靜`, cls: 'pos' });
+      envScore += 2;
+    } else if (vix < 20) {
+      parts.push(`VIX <strong>${vix.toFixed(1)}</strong>，市場穩定，恐慌指數在正常偏低區間`);
+      chips.push({ text: `VIX ${vix.toFixed(1)} 穩定`, cls: 'pos' });
+      envScore += 1;
+    } else if (vix < 25) {
+      parts.push(`VIX <strong>${vix.toFixed(1)}</strong>，市場略有不安，波動度上升，操作需謹慎`);
+      chips.push({ text: `VIX ${vix.toFixed(1)} 偏高`, cls: 'warn' });
+      envScore -= 1;
+    } else if (vix < 35) {
+      parts.push(`VIX 達 <strong>${vix.toFixed(1)}</strong>，市場恐慌明顯，短線操作難度大，建議縮小部位`);
+      chips.push({ text: `VIX ${vix.toFixed(1)} 恐慌`, cls: 'neg' });
+      envScore -= 2;
+    } else {
+      parts.push(`VIX 已達 <strong>${vix.toFixed(1)}</strong>，市場極度恐慌，建議暫緩所有進場操作，保留現金`);
+      chips.push({ text: `VIX ${vix.toFixed(1)} 極恐慌`, cls: 'neg' });
+      envScore -= 3;
+    }
+  }
+
+  // S&P 500
+  const spChg = d.sp?.chgPct;
+  if (spChg !== undefined) {
+    if (spChg <= -2) {
+      parts.push(`美股 S&P 500 大跌 <strong>${spChg.toFixed(1)}%</strong>，台股隔日可能補跌，宜避免逆勢進場`);
+      chips.push({ text: `美股跌 ${spChg.toFixed(1)}%`, cls: 'neg' });
+      envScore -= 2;
+    } else if (spChg < -0.5) {
+      parts.push(`美股 S&P 500 小跌 <strong>${spChg.toFixed(1)}%</strong>，需留意資金面壓力`);
+      chips.push({ text: `美股弱 ${spChg.toFixed(1)}%`, cls: 'warn' });
+      envScore -= 1;
+    } else if (spChg >= 1) {
+      parts.push(`美股 S&P 500 上漲 <strong>${spChg.toFixed(1)}%</strong>，全球風險偏好回升，台股偏正面`);
+      chips.push({ text: `美股漲 +${spChg.toFixed(1)}%`, cls: 'pos' });
+      envScore += 1;
+    } else {
+      chips.push({ text: `美股平 ${spChg >= 0 ? '+' : ''}${spChg.toFixed(1)}%`, cls: 'neu' });
+    }
+  }
+
+  // TWII
+  const twiiChg = d.twii?.chgPct;
+  if (twiiChg !== undefined) {
+    if (twiiChg <= -1.5) {
+      parts.push(`台股加權大跌 <strong>${twiiChg.toFixed(1)}%</strong>，大盤偏空壓力大`);
+      chips.push({ text: `加權跌 ${twiiChg.toFixed(1)}%`, cls: 'neg' });
+      envScore -= 1;
+    } else if (twiiChg >= 1) {
+      parts.push(`台股加權上漲 <strong>+${twiiChg.toFixed(1)}%</strong>，大盤氣氛偏多`);
+      chips.push({ text: `加權漲 +${twiiChg.toFixed(1)}%`, cls: 'pos' });
+      envScore += 1;
+    }
+  }
+
+  // TWD
+  const twdChg = d.twd?.chgPct;
+  if (twdChg !== undefined && Math.abs(twdChg) > 0.2) {
+    if (twdChg > 0.5) {
+      parts.push(`台幣貶值 <strong>${twdChg.toFixed(2)}%</strong>，外資可能持續匯出，留意資金壓力`);
+      chips.push({ text: `台幣貶 ${twdChg.toFixed(1)}%`, cls: 'warn' });
+      envScore -= 1;
+    } else if (twdChg < -0.5) {
+      chips.push({ text: `台幣升 ${Math.abs(twdChg).toFixed(1)}%`, cls: 'pos' });
+    }
+  }
+
+  // DXY
+  const dxyChg = d.dxy?.chgPct;
+  if (dxyChg !== undefined && dxyChg > 0.5) {
+    parts.push(`美元指數升值 <strong>+${dxyChg.toFixed(1)}%</strong>，強勢美元可能壓縮新興市場資金`);
+    chips.push({ text: `DXY 強 +${dxyChg.toFixed(1)}%`, cls: 'warn' });
+    envScore -= 1;
+  }
+
+  // Overall verdict
+  let badge, badgeCls, summary;
+  if (envScore >= 3) {
+    badge = '🟢 環境適合進場'; badgeCls = 'green';
+    summary = '各項指標均偏正面，整體操作環境良好，可依照個股訊號積極進場';
+  } else if (envScore >= 1) {
+    badge = '🟢 環境偏多'; badgeCls = 'green';
+    summary = '整體環境偏多，但需留意部分指標，建議依 SOP 嚴格選股再進場';
+  } else if (envScore === 0) {
+    badge = '🟡 環境中性'; badgeCls = 'yellow';
+    summary = '多空訊號交雜，環境中性，縮小部位、提高進場標準，避免追高';
+  } else if (envScore >= -2) {
+    badge = '🟡 環境謹慎'; badgeCls = 'yellow';
+    summary = '市場有明顯壓力，建議縮手觀望，等待訊號明確後再評估進場';
+  } else {
+    badge = '🔴 環境偏空'; badgeCls = 'red';
+    summary = '多項指標偏空，建議暫緩進場，持有部位宜保守，注意停損';
+  }
+
+  const badgeEl = document.getElementById('macro-env-badge');
+  if (badgeEl) { badgeEl.textContent = badge; badgeEl.className = 'macro-env-badge ' + badgeCls; }
+  const chipsEl = document.getElementById('macro-env-chips');
+  if (chipsEl) chipsEl.innerHTML = chips.map(c => `<span class="achip ${c.cls}">${c.text}</span>`).join('');
+
+  // Final text
+  if (parts.length === 0) parts.push('資料載入中，稍後再查看分析');
+  parts.push(`<strong>操作建議：</strong>${summary}`);
+  const textEl = document.getElementById('macro-analysis-text');
+  if (textEl) textEl.innerHTML = parts.join('；') + '。';
 }
 
 async function loadMacro() {
@@ -1481,16 +1611,16 @@ async function loadMacro() {
     { id: 'mc-tw-idx',      sym: '^TWII',     label: '加權',  tagKey: 'twii' },
     { id: 'mc-tw-etf0050',  sym: '0050.TW',   label: '0050' },
     { id: 'mc-tw-etf',      sym: '006208.TW', label: '006208' },
-    { id: 'mc-twd',         sym: 'TWD=X',     label: 'USD/TWD', noteKey: 'twd' },
-    { id: 'mc-sp500',       sym: '^GSPC',     label: 'S&P',   tagKey: 'sp' },
+    { id: 'mc-twd',         sym: 'TWD=X',     label: 'USD/TWD', snapKey: 'twd', noteKey: 'twd' },
+    { id: 'mc-sp500',       sym: '^GSPC',     label: 'S&P',   tagKey: 'sp',   snapKey: 'sp' },
     { id: 'mc-nasdaq',      sym: '^IXIC',     label: 'NASDAQ' },
-    { id: 'mc-vix',         sym: '^VIX',      label: 'VIX',   noteKey: 'vix' },
+    { id: 'mc-vix',         sym: '^VIX',      label: 'VIX',   snapKey: 'vix', noteKey: 'vix' },
     { id: 'mc-oil',         sym: 'CL=F',      label: 'WTI油' },
-    { id: 'mc-usd',         sym: 'DX-Y.NYB',  label: 'DXY' },
+    { id: 'mc-usd',         sym: 'DX-Y.NYB',  label: 'DXY',   snapKey: 'dxy' },
     { id: 'mc-gold',        sym: 'GC=F',      label: '黃金' },
   ];
 
-  await Promise.allSettled(allSymbols.map(async ({ id, sym, label, noteKey, tagKey }) => {
+  await Promise.allSettled(allSymbols.map(async ({ id, sym, label, noteKey, tagKey, snapKey }) => {
     try {
       const { p, pp, chgPct } = await fetchYF(sym);
       let note = null;
@@ -1502,7 +1632,8 @@ async function loadMacro() {
         note = chgPct > 0.3 ? '台幣貶值 ⚠️' : chgPct < -0.3 ? '台幣升值' : '匯率穩定';
       }
       setMacroCard(id, p, chgPct, note);
-      if (tagKey === 'twii') tags.push({ text: `加權 ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
+      if (snapKey) macroSnapshot[snapKey] = { p, chgPct };
+      if (tagKey === 'twii') { macroSnapshot.twii = { p, chgPct }; tags.push({ text: `加權 ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' }); }
       if (tagKey === 'sp')   tags.push({ text: `S&P ${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(1)}%`, cls: chgPct >= 0 ? 'bull' : 'bear' });
     } catch { failCount++; }
   }));
@@ -1515,7 +1646,7 @@ async function loadMacro() {
 
   // 狀態列標籤
   const bar = document.getElementById('macro-status-bar');
-  bar.innerHTML = '<span style="font-size:11px;color:var(--text2);margin-right:4px;">大盤環境：</span>';
+  bar.innerHTML = '<span style="font-size:11px;color:var(--text2);margin-right:4px;">即時數據：</span>';
   if (tags.length === 0) {
     bar.innerHTML += '<span class="macro-tag neutral">資料載入失敗</span>';
   } else {
@@ -1525,6 +1656,10 @@ async function loadMacro() {
       bar.appendChild(span);
     });
   }
+
+  // 宏觀分析
+  generateMacroAnalysis();
+
   document.getElementById('macro-loading').style.display = 'none';
   document.getElementById('macro-content').style.display = 'block';
   macroLoaded = true;
