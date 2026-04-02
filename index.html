@@ -134,10 +134,18 @@ header h1{font-size:15px;font-weight:700;}
 .prob-label{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;padding:0 8px;}
 .no-data{text-align:center;color:var(--text2);padding:40px;font-size:13px;}
 .result-area{display:none;}
-/* Analysis summary card */
-.analysis-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px;}
-.analysis-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
-.analysis-rating{font-size:17px;font-weight:800;padding:5px 16px;border-radius:8px;display:inline-block;}
+/* Hero card (merged: verdict + analysis + stock header) */
+.hero-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:10px;}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.hero-left{display:flex;flex-direction:column;gap:3px;}
+.hero-price-row{display:flex;align-items:baseline;gap:10px;}
+.hero-meta{display:flex;align-items:center;gap:8px;margin-top:3px;}
+.hero-name{font-size:15px;font-weight:700;color:var(--text);}
+.hero-date{font-size:11px;color:var(--text2);}
+.hero-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.hero-rating-row{display:flex;align-items:center;gap:6px;}
+.hero-divider{height:1px;background:var(--border);margin:12px 0 10px;}
+.analysis-rating{font-size:15px;font-weight:800;padding:4px 14px;border-radius:8px;display:inline-block;}
 .analysis-rating.strong-bull{background:rgba(63,185,80,.2);color:#5dde6e;border:1px solid rgba(63,185,80,.4);}
 .analysis-rating.bullish{background:rgba(63,185,80,.12);color:var(--green);}
 .analysis-rating.neutral{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
@@ -147,13 +155,13 @@ header h1{font-size:15px;font-weight:700;}
 .analysis-risk-tag.low{background:rgba(63,185,80,.1);color:var(--green);}
 .analysis-risk-tag.med{background:rgba(210,153,34,.15);color:var(--yellow);}
 .analysis-risk-tag.high{background:rgba(248,81,73,.1);color:var(--red);}
-.strategy-box{background:var(--bg3);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
+.strategy-box{background:var(--bg3);border-radius:8px;padding:10px 14px;display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;margin-bottom:10px;}
 .strategy-item{display:flex;flex-direction:column;gap:1px;}
 .strategy-item .si-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
 .strategy-item .si-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;}
-.analysis-text{font-size:13px;line-height:1.75;color:var(--text2);margin-bottom:10px;padding:10px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--blue);}
+.analysis-text{font-size:13px;line-height:1.75;color:var(--text2);margin-bottom:8px;padding:10px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--blue);}
 .analysis-text strong{color:var(--text);}
-.analysis-section-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:10px 0 6px;}
+.analysis-section-lbl{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin:8px 0 5px;}
 .chip-row{display:flex;gap:6px;flex-wrap:wrap;}
 .achip{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;}
 .achip.pos{background:rgba(63,185,80,.15);color:var(--green);}
@@ -189,10 +197,12 @@ header h1{font-size:15px;font-weight:700;}
 @media(max-width:640px){
   .quick-grid{grid-template-columns:repeat(2,1fr);}
   .macro-grid{grid-template-columns:repeat(2,1fr);}
-  .stock-header{flex-direction:column;align-items:flex-start;}
   .price-big{font-size:24px;}
   .cond-value{display:none;}
   .scenario-wrap{grid-template-columns:1fr 1fr;}
+  .strategy-box{grid-template-columns:repeat(2,1fr);}
+  .hero-top{flex-direction:column;gap:8px;}
+  .hero-right{align-items:flex-start;}
 }
 </style>
 </head>
@@ -224,52 +234,50 @@ header h1{font-size:15px;font-weight:700;}
   <!-- ===== Tab 1: 選股評估 ===== -->
   <div class="tab-content active" id="tab-eval">
     <div class="result-area" id="result">
-      <!-- 🔝 買入燈號在最上方 -->
-      <div class="verdict-top no-enter" id="verdict-top">
-        <div>
-          <div class="verdict-label" id="verdict-label">⛔ 訊號不足</div>
-          <div class="verdict-sub" id="verdict-sub">請查詢股票後開始評估</div>
-        </div>
-        <div class="score-pills">
-          <span class="score-pill" id="pill-select">選股 0/6</span>
-          <span class="score-pill" id="pill-entry">訊號 0/5</span>
-          <span class="score-pill" id="pill-exit">出場 0/5</span>
-        </div>
-      </div>
-      <!-- AI 分析摘要 -->
-      <div class="analysis-card" id="analysis-card" style="display:none;">
-        <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">🤖 AI 分析摘要</div>
-        <div class="analysis-header">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-              <span class="analysis-rating neutral" id="an-rating">中性</span>
-              <span class="analysis-risk-tag" id="an-risk">風險評估：—</span>
+      <!-- ===== HERO CARD (股票資訊 + 評級 + 分析，合一) ===== -->
+      <div class="hero-card" id="hero-card">
+        <!-- Top row: price + rating + scores -->
+        <div class="hero-top">
+          <div class="hero-left">
+            <div class="hero-price-row">
+              <div class="price-big flat" id="r-price">—</div>
+              <div class="price-chg" id="r-chg">—</div>
             </div>
-            <div class="chip-row" id="an-chips"></div>
+            <div class="hero-meta">
+              <span class="hero-name" id="r-name">—</span>
+              <span class="hero-date" id="r-date">—</span>
+            </div>
           </div>
-          <div class="strategy-box">
-            <div class="strategy-item"><div class="si-label">當前價位</div><div class="si-val" id="an-watch">—</div></div>
-            <div class="strategy-item"><div class="si-label">目標價①</div><div class="si-val up" id="an-target1">—</div></div>
-            <div class="strategy-item"><div class="si-label">停損基準</div><div class="si-val down" id="an-stop">—</div></div>
-            <div class="strategy-item"><div class="si-label">目標價②</div><div class="si-val up" id="an-target2">—</div></div>
+          <div class="hero-right">
+            <div class="hero-rating-row">
+              <span class="analysis-rating neutral" id="an-rating">中性</span>
+              <span class="analysis-risk-tag" id="an-risk">—</span>
+            </div>
+            <div class="score-pills">
+              <span class="score-pill" id="pill-select">選股 0/6</span>
+              <span class="score-pill" id="pill-entry">訊號 0/5</span>
+              <span class="score-pill" id="pill-exit">出場 0/5</span>
+            </div>
           </div>
         </div>
-        <div class="analysis-text" id="an-text">—</div>
-        <div class="analysis-section-lbl">技術訊號解讀</div>
+        <!-- Strategy price grid -->
+        <div class="strategy-box">
+          <div class="strategy-item"><div class="si-label">進場參考</div><div class="si-val" id="an-watch">—</div></div>
+          <div class="strategy-item"><div class="si-label">目標價①</div><div class="si-val up" id="an-target1">—</div></div>
+          <div class="strategy-item"><div class="si-label">目標價②</div><div class="si-val up" id="an-target2">—</div></div>
+          <div class="strategy-item"><div class="si-label">停損基準</div><div class="si-val down" id="an-stop">—</div></div>
+        </div>
+        <!-- Divider + Analysis -->
+        <div class="hero-divider"></div>
+        <div class="chip-row" id="an-chips" style="margin-bottom:8px;"></div>
+        <div class="analysis-text" id="an-text">查詢個股後顯示 AI 分析</div>
+        <div class="analysis-section-lbl">技術訊號</div>
         <div class="chip-row" id="an-tech-chips"></div>
-        <div class="analysis-section-lbl">情境推演</div>
-        <div class="scenario-wrap" id="an-scenarios"></div>
       </div>
+      <!-- Scenarios (below hero card) -->
+      <div class="scenario-wrap" id="an-scenarios" style="margin-bottom:12px;"></div>
 
-      <!-- 股價標題 -->
-      <div class="stock-header">
-        <div class="stock-title-row"><h2 id="r-name">—</h2><span id="r-date">—</span></div>
-        <div style="display:flex;align-items:baseline;gap:10px;">
-          <div class="price-big" id="r-price">—</div>
-          <div class="price-chg" id="r-chg">—</div>
-        </div>
-      </div>
-      <!-- 三大法人分別（移至前方，重要籌碼資訊優先顯示） -->
+      <!-- 三大法人 -->
       <div class="inst-row">
         <span class="inst-label">三大法人</span>
         <div class="inst-item"><div class="ii-name">外資</div><div class="ii-val" id="ii-foreign">—</div></div>
@@ -848,9 +856,7 @@ function setEl(id, text, color) {
 // AI 分析摘要
 // ================================================================
 function generateAnalysis() {
-  const card = document.getElementById('analysis-card');
-  if (!stockData.currentPrice) { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+  if (!stockData.currentPrice) return;
 
   const p = stockData.currentPrice;
   const atr = stockData.atr || (p * 0.015);
@@ -1052,25 +1058,7 @@ function updateScores() {
   document.getElementById('pill-select').textContent = `選股 ${sel}/6`;
   document.getElementById('pill-entry').textContent = `訊號 ${ent}/5`;
   document.getElementById('pill-exit').textContent = `出場 ${ext}/5`;
-  const vt = document.getElementById('verdict-top');
-  const vl = document.getElementById('verdict-label');
-  const vs = document.getElementById('verdict-sub');
-  if (ext >= 2) {
-    vt.className = 'verdict-top exit-now'; vl.textContent = '🔴 建議出場';
-    vs.textContent = `出場訊號 ${ext} 項觸發，建議減碼或出場`;
-  } else if (sel >= 5 && ent >= 4) {
-    vt.className = 'verdict-top can-enter-strong'; vl.textContent = '🟢 強烈建議進場';
-    vs.textContent = `選股 ${sel}/6、訊號 ${ent}/5，條件充分`;
-  } else if (sel >= 3 && ent >= 3) {
-    vt.className = 'verdict-top can-enter'; vl.textContent = '✅ 可考慮進場';
-    vs.textContent = `選股 ${sel}/6、訊號 ${ent}/5，條件尚可`;
-  } else if (sel >= 3 || ent >= 2) {
-    vt.className = 'verdict-top watch'; vl.textContent = '🟡 觀察等待';
-    vs.textContent = `選股 ${sel}/6、訊號 ${ent}/5，訊號尚不充分`;
-  } else {
-    vt.className = 'verdict-top no-enter'; vl.textContent = '⛔ 訊號不足';
-    vs.textContent = `選股 ${sel}/6、訊號 ${ent}/5，暫不進場`;
-  }
+  // 評級由 generateAnalysis() 統一處理，寫入 hero-card 的 an-rating
   generateAnalysis();
 }
 function calcPnl() {
